@@ -1,0 +1,82 @@
+# Copy this file to private config.toml; never publish real credentials.
+# 复制为私有 config.toml；不要公开真实密钥。
+
+[openai]
+# Optional OpenAI-compatible endpoint; empty uses the SDK default.
+# 可选兼容端点；留空使用 SDK 默认地址。
+base_url = ""
+api_key = ""
+
+[deepseek]
+# Official DeepSeek API; DEEPSEEK_API_KEY and DEEPSEEK_BASE_URL override these values.
+# DeepSeek 官方接口；环境变量 DEEPSEEK_API_KEY、DEEPSEEK_BASE_URL 优先。
+# Optional TAVILY_API_KEY adds Tavily to public search aggregation; weak coverage is marked degraded.
+# 可选环境变量 TAVILY_API_KEY 增加 Tavily 检索；公开来源覆盖不足时会标记证据降级。
+base_url = "https://api.deepseek.com"
+api_key = ""
+
+[anthropic]
+# Independent reviewer endpoint and key. Required for adaptive/always review.
+# 独立复核端点与密钥；adaptive/always 模式需要。
+base_url = ""
+api_key = ""
+
+[huggingface]
+# Gated GAIA dataset access and course attachment fallback; HF_TOKEN overrides.
+# GAIA 门控数据集及课程附件后备下载；环境变量 HF_TOKEN 优先。
+token = ""
+
+[agent]
+# DeepSeek V4 Pro uses Chat Completions with host-executed search tools.
+# DeepSeek Flash describes/OCRs images before Pro receives their text.
+# DeepSeek V4 Pro 使用 Chat Completions，由本地主机执行搜索工具。
+# 图像先交给 DeepSeek Flash 描述/OCR，再把文本传给 Pro。
+solver_provider = "deepseek"
+solver_model = "deepseek-v4-pro"
+judge_provider = "deepseek"
+judge_model = "deepseek-v4-pro"
+
+# The current independent reviewer requires the Anthropic Messages API.
+# 当前独立复核使用 Anthropic Messages API。
+reviewer_provider = "anthropic"
+reviewer_model = "claude-opus-5-5"
+
+# Audio: local requires the [audio] extra; openai uses the transcription API.
+# 音频：local 需要 [audio] 依赖；openai 调用转写 API。
+transcription_provider = "local"
+local_asr_model = "small"
+transcription_model = "gpt-transcribe"
+
+# Optional yt-dlp browser profile for YouTube evidence. Empty keeps browser cookies disabled.
+# 可选 yt-dlp YouTube 浏览器配置。留空表示禁用浏览器 Cookie；显式启用时填写 edge:Default。
+youtube_cookies_from_browser = ""
+
+# Choose a reasoning effort supported by your solver model and endpoint.
+# 推理强度必须受所选解题模型与端点支持。
+reasoning_effort = "high"
+
+# Only applies to the optional OpenAI Responses solver; DeepSeek does not use it.
+# 仅适用于可选的 OpenAI Responses 求解器；DeepSeek 不使用此工具。
+code_interpreter_enabled = false
+
+# Only OpenAI Responses built-in web_search uses this; DeepSeek local search has fixed bounds.
+# 仅 OpenAI Responses 内置 web_search 使用；DeepSeek 本地搜索另有固定限制。
+search_context_size = "medium"
+# DeepSeek: local function-call budget per solve/adjudication (0 means default 8; cap 12).
+# OpenAI Responses: positive values are sent to the API; 0 omits the parameter.
+# DeepSeek：每次求解/裁决的本地主机函数工具预算（0 回到默认 8；硬上限 12）。
+# OpenAI Responses：正数传给 API；0 省略该参数。
+max_tool_calls = 12
+# Output tokens per model request, including reasoning tokens.
+# 每次模型请求的输出 token 上限，包含推理 token。
+max_output_tokens = 8000
+
+# off: no review; adaptive: Level 2/3, attachments, or low confidence;
+# always: review every task. A disagreement triggers judge re-solving.
+# off 不复核；adaptive 复核高等级、附件及低置信度题；always 全部复核。
+review_mode = "adaptive"
+confidence_threshold = 0.80
+
+# Parallel questions. Lower this when limited by rate, cost, or CPU memory.
+# 并发题数；受速率、费用或本地内存限制时调低。
+workers = 3

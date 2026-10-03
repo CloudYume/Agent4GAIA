@@ -1,0 +1,2 @@
+-e .[video,audio]
+gradio>=5.0,<7.0

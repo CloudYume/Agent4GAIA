@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gaia-course-agent"
+version = "0.1.0"
+description = "A resumable agent runner for the Agents Course and GAIA test leaderboard"
+requires-python = ">=3.11"
+dependencies = [
+  "openai>=2.0",
+  "anthropic>=0.75",
+  "huggingface-hub>=0.30",
+  "pyarrow>=19.0",
+  "openpyxl>=3.1",
+  "Pillow>=11.0",
+  "PyMuPDF>=1.25",
+  "python-docx>=1.1",
+  "python-pptx>=1.0",
+  "requests>=2.32",
+]
+
+[project.optional-dependencies]
+video = ["imageio-ffmpeg>=0.6", "yt-dlp>=2025.3"]
+audio = ["faster-whisper>=1.1", "av==16.0.1; platform_system == 'Windows'"]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+gaia-agent = "gaia_agent.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["gaia_agent*"]
