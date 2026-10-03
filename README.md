@@ -4,7 +4,7 @@
 
 [English](README_EN.md) · [提交指南](SUBMISSION_GUIDE.md) · [配置示例](config.example.toml)
 
-> **当前状态：**本仓库没有发布经过校验的 301 题 test 答案文件，也不宣称 GAIA 正式榜成绩。模型调用会产生费用；请先用一题和 validation 试跑检查完整链路。
+> **当前状态：** 本仓库没有发布经过校验的 301 题 test 答案文件，也不宣称 GAIA 正式榜成绩。模型调用会产生费用；请先用一题和 validation 试跑检查完整链路。
 
 ## 适用范围
 
