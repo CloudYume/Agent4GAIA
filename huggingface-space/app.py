@@ -1,4 +1,4 @@
-"""公开 Space 的手动问答入口，不加载或发布 GAIA 私有题目。"""
+"""Manual Space interface; does not load or publish private GAIA tasks."""
 
 from __future__ import annotations
 

@@ -1,55 +1,55 @@
 # Agent4GAIA
 
-一个面向 [Hugging Face Agents Course Unit 4](https://huggingface.co/learn/agents-course/zh-CN/unit4/introduction) 与 [GAIA](https://huggingface.co/datasets/gaia-benchmark/GAIA) 的可续跑智能体命令行项目。它按题保存检查点，组合主解题、独立复核与争议裁决，并在导出前核对题目、答案和证据状态。
+A resumable agent CLI for [Hugging Face Agents Course Unit 4](https://huggingface.co/learn/agents-course/en/unit4/introduction) and [GAIA](https://huggingface.co/datasets/gaia-benchmark/GAIA). It checkpoints each task, combines a solver with independent review and dispute adjudication, and validates task coverage, answers, and evidence before export.
 
-[English](README_EN.md) · [提交指南](SUBMISSION_GUIDE.md) · [配置示例](config.example.toml)
+[Submission guide](docs/submission.md) · [Space deployment](docs/space-deployment.md) · [Configuration template](config.example.toml)
 
-> **当前状态：** 本仓库没有发布经过校验的 301 题 test 答案文件，也不宣称 GAIA 正式榜成绩。模型调用会产生费用；请先用一题和 validation 试跑检查完整链路。
+> **Project status:** This repository does not publish a verified 301-question test answer file or claim an official GAIA leaderboard score. Model calls incur charges; start with one question and a validation pilot.
 
-## 适用范围
+## Scope
 
-| 工作流 | 数据 | 产物 | 提交位置 |
+| Workflow | Data | Output | Destination |
 | --- | --- | --- | --- |
-| 课程 Unit 4 | 课程指定的 20 道验证题 | 课程 API 所需的 JSON payload | [课程评分系统](https://agents-course-unit4-scoring.hf.space/docs) |
-| 本地试跑 | GAIA validation 中固定抽取的 20 题，Level 1/2/3 为 6/10/4 | 私有的进度与评分报告 | 不提交正式榜 |
-| GAIA 正式评测 | 2023 test 的 301 题，Level 1/2/3 为 93/159/49 | `gaia-test.jsonl` | [GAIA 排行榜](https://huggingface.co/spaces/gaia-benchmark/leaderboard)手动上传 |
+| Course Unit 4 | The course's 20 selected validation questions | JSON payload for the course API | [Course scoring service](https://agents-course-unit4-scoring.hf.space/docs) |
+| Local pilot | A fixed 20-question GAIA validation sample, with Level 1/2/3 counts of 6/10/4 | Private progress and score reports | Never the official leaderboard |
+| Official GAIA evaluation | All 301 questions in 2023 test, with Level 1/2/3 counts of 93/159/49 | `gaia-test.jsonl` | Manual upload to the [GAIA leaderboard](https://huggingface.co/spaces/gaia-benchmark/leaderboard) |
 
-课程分数与正式榜分数不可互换。GAIA 数据集需要登录 Hugging Face 并接受门控条款；test 标准答案不向本地开放。
+Course and official leaderboard scores are separate. The GAIA dataset requires a Hugging Face account with the gated terms accepted. Test answers are unavailable locally.
 
-## 快速开始
+## Quick start
 
-以下命令适用于项目根目录下的 Windows PowerShell，要求 Python 3.11+：
+Run these commands from the project root in Windows PowerShell with Python 3.11+:
 
 ```powershell
 py -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -e ".[audio,video]"
 if (!(Test-Path config.toml)) { Copy-Item config.example.toml config.toml }
-# 在私有的 config.toml 中填写可用的模型、端点和密钥
+# Set working models, endpoints, and credentials in the private config.toml
 .\.venv\Scripts\python.exe -m gaia_agent.cli doctor
 .\.venv\Scripts\python.exe -m gaia_agent.cli run course --runs .runs/course --limit 1
 ```
 
-`doctor` 只检查配置，不调用模型。最后一条命令会请求课程题目并实际调用模型；如果需要附件，程序会先获取附件。`audio` 提供默认的本地语音转写，`video` 提供视频下载和处理依赖；纯开发测试可另装 `".[dev]"`。
+`doctor` inspects configuration without calling a model. The last command fetches course tasks and makes real model calls; it downloads attachments when needed. The `audio` extra supplies the default local speech transcription, and `video` installs video download and processing dependencies. Install `".[dev]"` separately for development tests.
 
-### 配置要点
+### Configuration
 
-默认示例采用 DeepSeek 求解和裁决、Anthropic 独立复核。模型 ID、接口地址和额度必须以你实际使用的服务为准；示例值不保证任意网关都支持。
+The template selects DeepSeek for solving and adjudication and Anthropic for independent review. Check model IDs, endpoints, and quota against your actual provider: template values are not guaranteed to work on every gateway.
 
-| 配置 | 用途 |
+| Setting | Purpose |
 | --- | --- |
-| `[deepseek]` 或 `DEEPSEEK_API_KEY` | 默认主解题、裁决和按需视觉描述 |
-| `[anthropic]` 或 `ANTHROPIC_API_KEY` | `review_mode = "adaptive"` / `"always"` 时的独立复核；设为 `"off"` 可不配置 |
-| `[huggingface]` 或 `HF_TOKEN` | 门控 GAIA 数据集与课程附件后备下载 |
-| `TAVILY_API_KEY` | 可选的网页搜索来源；缺少可靠来源时会记录证据降级 |
-| `[agent]` | 模型选择、复核模式、并发题数和单题工具预算 |
+| `[deepseek]` or `DEEPSEEK_API_KEY` | Default solver, adjudicator, and on-demand visual description |
+| `[anthropic]` or `ANTHROPIC_API_KEY` | Independent review with `review_mode = "adaptive"` or `"always"`; not needed with `"off"` |
+| `[huggingface]` or `HF_TOKEN` | Gated GAIA access and fallback course attachment downloads |
+| `TAVILY_API_KEY` | Optional search source; weak source coverage is recorded as degraded evidence |
+| `[agent]` | Model selection, review mode, question concurrency, and per-task tool budget |
 
-环境变量优先于 `config.toml`。该文件被 `.gitignore` 排除；不要把凭证写进 `config.example.toml`、README 或运行记录。可选的 OpenAI Responses 解题路径也在配置示例中说明。
+Environment variables override `config.toml`. The file is ignored by Git; never place credentials in `config.example.toml`, README files, or run records. The optional OpenAI Responses solver route is also documented in the template.
 
-## 运行评测
+## Run evaluations
 
-### 课程 20 题
+### Course: 20 questions
 
-单题检查通过后，在同一运行目录续跑；已完成题目默认跳过：
+After the one-question check, resume in the same run directory. Completed tasks are skipped by default:
 
 ```powershell
 .\.venv\Scripts\python.exe -m gaia_agent.cli run course --runs .runs/course
@@ -57,18 +57,18 @@ if (!(Test-Path config.toml)) { Copy-Item config.example.toml config.toml }
 .\.venv\Scripts\python.exe -m gaia_agent.cli export course --runs .runs/course --output .runs/course-payload.json --username YOUR_HF_USERNAME --agent-code https://huggingface.co/spaces/YOUR_HF_USERNAME/YOUR_SPACE/tree/main
 ```
 
-`export course` 要求 20 道题均有有效答案，并要求 `agent-code` 指向可查看代码的公开 Space。`submit-course .runs/course-payload.json` 会**实际向课程系统提交**，请先检查 payload；它与正式 GAIA 排行榜上传是两条不同流程。
+`export course` requires 20 valid answers and an `agent-code` URL for a public Space with inspectable code. `submit-course .runs/course-payload.json` **writes to the course service**; inspect the payload first. This is separate from uploading to the official GAIA leaderboard.
 
 ### GAIA 2023 test
 
-先在有标准答案的 validation 集完成固定 20 题试跑。仅当评分报告中 `pilot_complete` 与 `meets_40_percent_gate` 均为 `true`，才开始正式 test：
+First complete a fixed 20-question pilot on validation, where reference answers exist. The recommended readiness check is that both `pilot_complete` and `meets_40_percent_gate` are `true` in the score report. Inspect these fields yourself before starting test; the CLI does not automatically enforce this cross-run pilot gate:
 
 ```powershell
 .\.venv\Scripts\python.exe -m gaia_agent.cli preflight validation --runs .runs/validation-pilot
 .\.venv\Scripts\python.exe -m gaia_agent.cli run validation --runs .runs/validation-pilot --manifest .runs/validation-pilot/.meta/pilot-20.json
 .\.venv\Scripts\python.exe -m gaia_agent.cli score-validation validation --runs .runs/validation-pilot --manifest .runs/validation-pilot/.meta/pilot-20.json --output .runs/validation-pilot/.meta/score.json
 
-# 确认 score.json 的两个门槛字段后再执行以下命令
+# Check both gate fields in score.json before continuing
 .\.venv\Scripts\python.exe -m gaia_agent.cli preflight test --runs .runs/test-official
 .\.venv\Scripts\python.exe -m gaia_agent.cli run test --runs .runs/test-official
 .\.venv\Scripts\python.exe -m gaia_agent.cli status test --runs .runs/test-official
@@ -76,46 +76,59 @@ if (!(Test-Path config.toml)) { Copy-Item config.example.toml config.toml }
 .\.venv\Scripts\python.exe -m gaia_agent.cli check-official .runs/gaia-test.jsonl
 ```
 
-`preflight` 检查授权、附件、依赖和输入快照，不调用解题模型。正式导出要求全部 301 题完成、答案非空且单行，并阻止未解决的复核与证据问题。`check-official` 根据 test 元数据核对 UTF-8 JSONL、唯一题号和完整等级覆盖。通过后仍需人工复查并在[榜单页面](https://huggingface.co/spaces/gaia-benchmark/leaderboard)上传；CLI 不会自动提交正式榜。文件格式、表单字段与上传前检查见[提交指南](SUBMISSION_GUIDE.md)。
+`preflight` checks dataset access, attachments, dependencies, and the input snapshot without calling a solver model. Strict export requires all 301 tasks to be complete with nonempty, single-line answers and blocks unresolved review or evidence issues. `check-official` checks UTF-8 JSONL, unique task IDs, and complete level coverage against test metadata. Review the file and task evidence before manually uploading it to the [leaderboard](https://huggingface.co/spaces/gaia-benchmark/leaderboard); the CLI does not submit official results. See the [submission guide](docs/submission.md) for file format, form fields, and upload checks.
 
-运行目录绑定代码、配置、题单和附件指纹。改变这些输入后，应使用新的 `--runs` 目录重新预检；同一目录可在中断后续跑。
+A run directory is bound to code, configuration, task manifest, and attachment fingerprints. After changing those inputs, preflight again in a new `--runs` directory. Interrupted work can resume in the same unchanged directory.
 
-## 工作原理
+## Architecture
 
 ```mermaid
 flowchart TD
-    A[题目与附件] --> B[预检与输入指纹]
-    B --> C[本地解析与证据工具]
-    C --> D[主解题器]
-    D --> E{需要复核?}
-    E -- 否 --> H[逐题检查点]
-    E -- 是 --> F[独立复核器]
-    F --> G{存在分歧?}
-    G -- 否 --> H
-    G -- 是 --> J[裁决器]
+    A[Task and attachment] --> B[Preflight and fingerprints]
+    B --> C[Local parsing and evidence tools]
+    C --> D[Solver]
+    D --> E{Review required?}
+    E -- No --> H[Per-task checkpoint]
+    E -- Yes --> F[Independent reviewer]
+    F --> G{Disagreement?}
+    G -- No --> H
+    G -- Yes --> J[Adjudicator]
     J --> H
-    H --> I[严格导出与文件校验]
+    H --> I[Strict export and file check]
 ```
 
-| 组件 | 实现 | 职责 |
+| Component | Implementation | Responsibility |
 | --- | --- | --- |
-| 智能体角色 | `gaia_agent/agent.py`、`orchestrator.py`、`reviewer.py` | 求解、按需盲复核、分歧裁决 |
-| 证据工具 | `attachments.py`、`media.py`、`web_tools.py`、`tools/` | 文档/表格提取、音视频与视觉检查、网页检索、只读表格查询和受限计算 |
-| 状态与校验 | `memory.py`、`store.py`、`runmeta.py`、`validation.py` | 逐题记忆、阶段检查点、输入指纹、导出门槛 |
-| 入口与评分 | `cli.py`、`scoring.py` | 批量运行、进度报告、validation 估算评分和文件检查 |
+| Agent roles | `gaia_agent/agent.py`, `orchestrator.py`, `reviewer.py` | Solve, trigger blind review when needed, adjudicate disagreements |
+| Evidence tools | `attachments.py`, `media.py`, `web_tools.py`, `tools/` | Document and table extraction, audio/video and visual inspection, web search, read-only table queries, bounded calculation |
+| State and validation | `memory.py`, `store.py`, `runmeta.py`, `validation.py` | Task-local memory, stage checkpoints, input fingerprints, export gates |
+| CLI and scoring | `cli.py`, `scoring.py` | Batch execution, progress reports, approximate validation scoring, file checks |
 
-记忆只在当前题目内使用；本项目**没有**跨题自动学习或技能积累。视觉描述、音频转写、视频抽帧及匿名网页搜索都可能遗漏证据。搜索来源不足会标记降级，复核也不保证答案正确；请结合逐题记录核对关键数字、日期、单位和来源冲突。
+Memory is **task-local**; there is no automatic cross-task learning or skill accumulation. Visual descriptions, transcription, sampled video frames, and public search can miss evidence. Weak search coverage is marked degraded, and independent review does not guarantee correctness. Inspect per-task records for critical numbers, dates, units, and conflicting sources.
 
-## 开发与资料
+## Repository layout
+
+| Path | Contents |
+| --- | --- |
+| [`gaia_agent/`](gaia_agent/) | Solver, reviewer, adjudicator, evidence tools, checkpoints, scoring, and CLI. |
+| [`huggingface-space/`](huggingface-space/) | Gradio application, Space metadata, and deployment requirements. |
+| [`scripts/`](scripts/) | Allowlisted Space bundle builder and provenance-preserving run merger. |
+| [`docs/`](docs/) | Submission and Space deployment instructions. |
+| [`tests/`](tests/) | Local regression tests for the runner, tools, validation, and bundle. |
+| [`config.example.toml`](config.example.toml) | Credential-free configuration template. |
+
+Supporting documents use lowercase, hyphen-separated filenames. Python packages, modules, and scripts retain standard underscore-based identifiers.
+
+## Development and references
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -e ".[audio,video,dev]"
 .\.venv\Scripts\python.exe -m pytest -q
 ```
 
-- [提交指南](SUBMISSION_GUIDE.md)：正式榜 JSONL、网页表单与上传检查。
-- [配置示例](config.example.toml)：完整参数及密钥覆盖规则。
-- [Space 演示](space/README.md)：课程公开代码链接所需的手动问答入口；发布包由 `scripts/build_space.py` 按白名单构建。
-- [Agents Course Unit 4](https://huggingface.co/learn/agents-course/zh-CN/unit4/introduction) · [GAIA 数据集](https://huggingface.co/datasets/gaia-benchmark/GAIA) · [正式榜](https://huggingface.co/spaces/gaia-benchmark/leaderboard)
+- [Submission guide](docs/submission.md): official JSONL, leaderboard form, and pre-upload checks.
+- [Configuration template](config.example.toml): complete settings and credential overrides.
+- [Space deployment](docs/space-deployment.md): build an allowlisted bundle containing the [manual question-and-attachment demo](huggingface-space/README.md).
+- [Agents Course Unit 4](https://huggingface.co/learn/agents-course/en/unit4/introduction) · [GAIA dataset](https://huggingface.co/datasets/gaia-benchmark/GAIA) · [Leaderboard](https://huggingface.co/spaces/gaia-benchmark/leaderboard)
 
-仓库不应包含 `config.toml`、`.runs/`、GAIA 题目或附件、验证答案及 test JSONL。公开演示 Space 也只接受用户手动输入，不托管题库。
+Keep `config.toml`, `.runs/`, GAIA questions and attachments, validation answers, and test JSONL out of the repository. The public demo Space accepts manually entered questions and does not host benchmark tasks.

@@ -1,4 +1,4 @@
-"""按白名单生成可上传的 Space 目录，避免泄露本地数据和密钥。"""
+"""Build an allowlisted Space directory without local data or credentials."""
 
 from __future__ import annotations
 
@@ -9,9 +9,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PUBLIC_FILES = {
-    "space/README.md": "README.md",
-    "space/app.py": "app.py",
-    "space/requirements.txt": "requirements.txt",
+    "huggingface-space/README.md": "README.md",
+    "huggingface-space/app.py": "app.py",
+    "huggingface-space/requirements.txt": "requirements.txt",
     "pyproject.toml": "pyproject.toml",
     "config.example.toml": "config.example.toml",
 }
@@ -34,7 +34,7 @@ def build(target: Path) -> list[Path]:
             shutil.copy2(source, destination)
             copied.append(destination)
     except Exception:
-        # 目标目录由本次调用创建，失败时只清理本次构建产物。
+        # This call created the target; remove only its own incomplete bundle.
         shutil.rmtree(target)
         raise
     return copied
@@ -42,7 +42,7 @@ def build(target: Path) -> list[Path]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", type=Path, default=ROOT / "dist" / "space_bundle")
+    parser.add_argument("--output", type=Path, default=ROOT / "dist" / "space-bundle")
     args = parser.parse_args()
     copied = build(args.output)
     print(f"Built {len(copied)} public files in {args.output.resolve()}")
